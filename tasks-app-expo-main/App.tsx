@@ -4,14 +4,12 @@ import {
   Text, 
   View, 
   TextInput, 
-  TouchableOpacity, 
-  FlatList, 
+  Pressable, 
   SectionList, 
   SafeAreaView, 
   Platform, 
   StatusBar as RNStatusBar, 
   Image, 
-  Button, 
   Alert 
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -21,6 +19,7 @@ import { Feather, AntDesign } from '@expo/vector-icons';
 /**
  * 1. Componente <TaskItem />
  * Extraído da lógica visual individual de uma tarefa.
+ * Atualizado para usar Pressable com efeitos de toque nos ícones.
  */
 const TaskItem = ({ item, updateMode, deleteToDo }: { 
   item: TaskItemType, 
@@ -30,12 +29,33 @@ const TaskItem = ({ item, updateMode, deleteToDo }: {
   <View style={styles.todo}>
     <Text style={styles.text}>{item.text}</Text>
     <View style={styles.icons}>
-      <TouchableOpacity onPress={updateMode}>
-        <Feather name="edit" size={20} color="#fff" style={styles.icon} />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={deleteToDo}>
-        <AntDesign name="delete" size={20} color="#fff" style={styles.icon} />
-      </TouchableOpacity>
+      <Pressable 
+        onPress={updateMode}
+        style={({ pressed }) => [
+          styles.iconButton,
+          {
+            backgroundColor: '#4CAF50',
+            transform: [{ scale: pressed ? 0.92 : 1 }],
+            opacity: pressed ? 0.8 : 1,
+          }
+        ]}
+      >
+        <Feather name="edit" size={18} color="#fff" />
+      </Pressable>
+      
+      <Pressable 
+        onPress={deleteToDo}
+        style={({ pressed }) => [
+          styles.iconButton,
+          {
+            backgroundColor: '#f44336',
+            transform: [{ scale: pressed ? 0.92 : 1 }],
+            opacity: pressed ? 0.8 : 1,
+          }
+        ]}
+      >
+        <AntDesign name="delete" size={18} color="#fff" />
+      </Pressable>
     </View>
   </View>
 );
@@ -50,28 +70,6 @@ const TaskList = ({ tasks, updateMode, deleteToDo }: {
   updateMode: (id: string, text: string) => void, 
   deleteToDo: (id: string) => void 
 }) => {
-  // Para o bônus da SectionList, vamos categorizar as tarefas.
-  // Como o modelo original não tem 'status', vamos simular baseado em alguma lógica ou apenas mostrar a FlatList.
-  // Se preferir FlatList simples:
-  /*
-  return (
-    <FlatList
-      data={tasks}
-      keyExtractor={(item) => item._id}
-      renderItem={({ item }) => (
-        <TaskItem 
-          item={item} 
-          updateMode={() => updateMode(item._id, item.text)} 
-          deleteToDo={() => deleteToDo(item._id)} 
-        />
-      )}
-      contentContainerStyle={styles.listContent}
-      ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma tarefa encontrada.</Text>}
-    />
-  );
-  */
-
-  // Implementando SectionList como Bônus:
   const sections = [
     {
       title: 'Suas Tarefas',
@@ -150,24 +148,31 @@ export default function App() {
             placeholder="O que precisa ser feito?"
             value={text}
             onChangeText={(val) => setText(val)}
-            // 2. Melhorias no TextInput
             maxLength={50}
             keyboardType="default"
             placeholderTextColor="#888"
           />
 
-          <TouchableOpacity
-            style={styles.addButton}
+          <Pressable
             onPress={
               isUpdating
                 ? () => updateTask(taskId, text, setTasks, setText, setIsUpdating)
                 : () => addTask(text, setText, setTasks)
             }
+            style={({ pressed }) => [
+              styles.addButton,
+              {
+                backgroundColor: isUpdating ? '#4CAF50' : '#007AFF',
+                transform: [{ scale: pressed ? 0.98 : 1 }],
+                elevation: pressed ? 2 : 5,
+                shadowOffset: pressed ? { width: 0, height: 1 } : { width: 0, height: 3 },
+              }
+            ]}
           >
             <Text style={styles.addButtonText}>
               {isUpdating ? "Atualizar" : "Adicionar"}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* 1. Uso do componente <TaskList /> que implementa SectionList/FlatList */}
@@ -179,13 +184,21 @@ export default function App() {
           />
         </View>
 
-        {/* 2. Botão Nativo <Button /> */}
+        {/* 2. Botão Modernizado com Pressable substituindo o <Button /> Nativo */}
         <View style={styles.footer}>
-          <Button 
-            title="Limpar Lista" 
-            onPress={handleDeleteAll} 
-            color="#ff4444"
-          />
+          <Pressable 
+            onPress={handleDeleteAll}
+            style={({ pressed }) => [
+              styles.clearButton,
+              {
+                transform: [{ scale: pressed ? 0.98 : 1 }],
+                elevation: pressed ? 1 : 3,
+                backgroundColor: pressed ? '#d32f2f' : '#ff4444',
+              }
+            ]}
+          >
+            <Text style={styles.clearButtonText}>Limpar Lista</Text>
+          </Pressable>
         </View>
 
       </View>
@@ -256,12 +269,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ddd',
   },
   addButton: {
-    backgroundColor: '#007AFF',
     height: 45,
     paddingHorizontal: 20,
-    borderRadius: 6,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   addButtonText: {
     color: '#fff',
@@ -290,17 +305,17 @@ const styles = StyleSheet.create({
   },
   todo: {
     backgroundColor: '#fff',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     marginTop: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    elevation: 1,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 2,
   },
   text: {
@@ -310,13 +325,40 @@ const styles = StyleSheet.create({
   },
   icons: {
     flexDirection: 'row',
-    gap: 15,
+    gap: 10,
     marginLeft: 15,
   },
-  icon: {
-    padding: 4,
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
   },
   footer: {
     marginVertical: 20,
+    alignItems: 'center',
+  },
+  clearButton: {
+    width: '100%',
+    height: 50,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  clearButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   }
 });
